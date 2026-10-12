@@ -1,0 +1,10 @@
+{
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.configureOnOpen": true,
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.cppStandard": "c++17",
+  "files.associations": {
+    "*.h": "cpp"
+  },
+  "files.encoding": "utf8"
+}
