@@ -48,7 +48,6 @@ app/
 │   ├── structures/         własne struktury: kopiec (kolejka priorytetowa) i lista wiązana
 │   ├── assignment/         score, algorytm przydziału assign(), obsługa zdarzeń
 │   └── simulation/         generator danych, symulacja dni pracy, strategie, metryki
-├── tests/                  testy jednostkowe i scenariusze brzegowe
 ├── sql/
 │   ├── schema.sql          schemat bazy
 │   └── seed.sql            dane testowe
@@ -68,17 +67,16 @@ app/
 | `src/structures/` | Kopiec binarny (`push`, `pop`, `peek`, `size`, `isEmpty`) i kolejka kierowcy jako lista wiązana (`enqueue`, `insertUrgent`, `dequeue`, `peek`, `toList`, `depart`). Kopiec żyje w RAM, lista wiązana jest trwała w bazie (`head` / `tail` / `next`). | 3 | model, db |
 | `src/assignment/` | Liczenie score (priorytet + aging + deadline), zachłanny `assign()`, zdarzenia `NEW_DELIVERY`, `DRIVER_AVAILABLE`, `DELIVERY_CANCELLED`, `DEPART`, `DELIVERED`. | 4 | structures, db |
 | `src/simulation/` | Generator losowych paczek i kierowców, symulacja kilku dni, strategie A (FIFO) / B (priorytet) / C (pełny score), metryki zapisywane do `output/`. | 5 | assignment |
-| `tests/` | Testy struktur i algorytmu, scenariusze brzegowe (paczka cięższa niż każdy kierowca, brak kierowców, URGENT przy kolejkach `DEPARTED`, same URGENT). | 3–6 | wszystko |
 
 Kierunek zależności idzie **w dół tabeli**: `model` nie wie nic o bazie, `structures` nie wie nic o algorytmie itd. Dzięki temu moduły można robić równolegle, jeśli wcześniej uzgodnimy interfejsy (nagłówki `.h`).
 
 ## Konwencje
 
 - Każdy nowy plik `.cpp` w `src/` (także w podfolderach) jest dołączany do builda **automatycznie** — nie trzeba edytować `CMakeLists.txt`.
+- Klasy piszemy w całości w plikach `.h` (metody w ciele klasy), na górze `#pragma once`. Plik `.cpp` dodajemy tylko wtedy, gdy naprawdę jest potrzebny.
 - Nagłówki dołączamy ścieżką od `src/`, np. `#include "model/Delivery.h"`.
 - Przestrzeń nazw = nazwa folderu (`model::`, `db::`, `structures::`, `assignment::`, `simulation::`).
 - Pliki `.gitkeep` trzymają puste foldery w repozytorium — można je usunąć, gdy w folderze pojawi się kod.
-- Testy w `tests/` nie są jeszcze podpięte do CMake — dodamy target, gdy wybierzemy sposób testowania.
 
 ## Praca w zespole
 
