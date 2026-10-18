@@ -20,11 +20,11 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
 - [x] README: plik wejściowy/wyjściowy, wykorzystanie STL.
 - [ ] Commit i PR do `main` (najlepiej z gałęzi o nazwie pasującej do zmian, np. `feat/no-db-io`).
 
-## Etap 1 — model (`src/model/`)
+## Etap 1 — model (`src/enums/`, `src/model/`)
 
-- [ ] Enum `Priority` (`NORMAL`, `URGENT`) + zamiana na tekst i z tekstu.
-- [ ] Enum `DeliveryStatus` (np. `WAITING`, `ASSIGNED`, `DEPARTED`, `DELIVERED`, `CANCELLED`) + zamiana na tekst.
-- [ ] Enum `QueueStatus` (`OPEN`, `DEPARTED`) + zamiana na tekst.
+- [x] Enum `Priority` (`NORMAL`, `URGENT`) + zamiana na tekst i z tekstu.
+- [x] Enum `DeliveryStatus` (`WAITING`, `ASSIGNED`, `IN_TRANSIT`, `DELIVERED`, `CANCELLED`) + zamiana na tekst.
+- [x] Enum `QueueStatus` (`OPEN`, `DEPARTED`) + zamiana na tekst.
 - [ ] Klasa `Delivery`: `id`, adres, waga, priorytet, dzień przyjęcia, termin, status, `id` kierowcy.
 - [ ] Klasa `DriverQueue`: `id` kierowcy, kolejka(i) paczek (`std::queue`), status, aktualne obciążenie w kg.
 
