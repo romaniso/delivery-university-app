@@ -84,7 +84,8 @@ app/
 ├── TODO.md                 plan prac z podziałem na etapy
 ├── src/
 │   ├── main.cpp            punkt wejścia — spina moduły razem
-│   ├── model/              klasy z danymi + typy wyliczeniowe
+│   ├── enums/              typy wyliczeniowe i ich zamiana na tekst
+│   ├── model/              klasy z danymi
 │   ├── storage/            magazyn danych w pamięci
 │   ├── io/                 odczyt pliku wejściowego i zapis pliku wyjściowego
 │   ├── assignment/         score, komparatory, algorytm przydziału assign(), obsługa zdarzeń
@@ -98,20 +99,21 @@ app/
 
 | Folder | Odpowiedzialność | Etap | Zależy od |
 |--------|------------------|------|-----------|
-| `src/model/` | `Driver`, `DriverQueue`, `Delivery`, enumy `Priority` / `DeliveryStatus` / `QueueStatus` i ich zamiana na tekst. Same dane, bez logiki. | 1 | — |
+| `src/enums/` | Enumy `Priority` / `DeliveryStatus` / `QueueStatus` i ich zamiana na tekst (`toString`, `priorityFromString`). | 1 | — |
+| `src/model/` | `Driver`, `DriverQueue`, `Delivery`. Same dane, bez logiki. | 1 | enums |
 | `src/storage/` | `Warehouse` — listy kierowców i paczek w pamięci (`std::vector`), nadawanie kolejnych `id`. | 2 | model |
 | `src/io/` | `InputFile` — wczytanie pliku wejściowego do `Warehouse`. `OutputFile` — zapis raportu do pliku wyjściowego. | 2 | model, storage |
 | `src/assignment/` | Liczenie score (priorytet + aging + deadline), komparatory/funktory, `std::priority_queue` paczek, kolejki kierowców (`std::queue`), zachłanny `assign()`, zdarzenia `NEW_DELIVERY`, `DRIVER_AVAILABLE`, `DELIVERY_CANCELLED`, `DEPART`, `DELIVERED`. | 3 | storage |
 | `src/simulation/` | Symulacja kilku dni, strategie A (FIFO) / B (priorytet) / C (pełny score), generator losowych plików wejściowych, metryki zapisywane do `output/`. | 4 | assignment, io |
 
-Kierunek zależności idzie **w dół tabeli**: `model` nie wie nic o magazynie, `storage` nie wie nic o plikach itd. Dzięki temu moduły można robić równolegle, jeśli wcześniej uzgodnimy interfejsy (nagłówki `.h`).
+Kierunek zależności idzie **w dół tabeli**: `enums` nie zależy od niczego, `model` nie wie nic o magazynie, `storage` nie wie nic o plikach itd. Dzięki temu moduły można robić równolegle, jeśli wcześniej uzgodnimy interfejsy (nagłówki `.h`).
 
 ## Konwencje
 
 - Każdy nowy plik `.cpp` w `src/` (także w podfolderach) jest dołączany do builda **automatycznie** — nie trzeba edytować `CMakeLists.txt`.
 - Klasy piszemy w całości w plikach `.h` (metody w ciele klasy), na górze `#pragma once`. Plik `.cpp` dodajemy tylko wtedy, gdy naprawdę jest potrzebny. Funkcje poza klasą w `.h` oznaczamy `inline`.
 - Nagłówki dołączamy ścieżką od `src/`, np. `#include "model/Delivery.h"`.
-- Przestrzeń nazw = nazwa folderu (`model::`, `storage::`, `io::`, `assignment::`, `simulation::`).
+- Przestrzeń nazw = nazwa folderu (`enums::`, `model::`, `storage::`, `io::`, `assignment::`, `simulation::`).
 - Pliki `.gitkeep` trzymają puste foldery w repozytorium — można je usunąć, gdy w folderze pojawi się kod.
 
 ## Praca w zespole
