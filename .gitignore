@@ -4,9 +4,7 @@ out/
 .cache/
 compile_commands.json
 
-# Lokalna baza danych i wyniki symulacji
-data/*.db
-data/*.db-journal
+# Wyniki symulacji
 output/*
 !output/.gitkeep
 
