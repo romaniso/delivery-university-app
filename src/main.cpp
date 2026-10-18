@@ -1,20 +1,48 @@
-// Punkt wejscia programu.
-// Na razie sprawdza tylko, czy projekt sie buduje i SQLite jest poprawnie podlinkowane.
-// Logike aplikacji dopisujemy w modulach w src/ (patrz README.md).
+// Punkt wejscia programu - spina moduly razem (patrz README.md).
+// Uzycie: kolejka [plik_wejsciowy] [plik_wyjsciowy]
 
-#include <sqlite3.h>
-
+#include <algorithm>
+#include <exception>
 #include <iostream>
+#include <string>
+#include <vector>
 
-int main() {
-    std::cout << "Kolejka Paczek - setup OK\n";
-    std::cout << "SQLite " << sqlite3_libversion() << '\n';
+#include "assignment/Comparators.h"
+#include "io/InputFile.h"
+#include "io/OutputFile.h"
+#include "storage/Warehouse.h"
+
+int main(int argc, char* argv[]) {
+    if (argc > 3) {
+        std::cerr << "Uzycie: kolejka [plik_wejsciowy] [plik_wyjsciowy]\n";
+        return 1;
+    }
 
     // PROJECT_ROOT_DIR ustawia CMake - sciezka do katalogu projektu,
-    // przydatna do znalezienia sql/ i data/ niezaleznie od katalogu uruchomienia.
-    std::cout << "Katalog projektu: " << PROJECT_ROOT_DIR << '\n';
+    // dzieki niej domyslne pliki dzialaja niezaleznie od katalogu uruchomienia.
+    const std::string root = PROJECT_ROOT_DIR;
+    const std::string inputPath = argc > 1 ? std::string(argv[1]) : root + "/data/input.txt";
+    const std::string outputPath = argc > 2 ? std::string(argv[2]) : root + "/output/result.txt";
 
-    // TODO: polaczenie z baza, model, struktury, algorytm przydzialu, symulacja
+    std::cout << "Kolejka Paczek\n";
+
+    try {
+        storage::Warehouse warehouse;
+        io::InputFile(inputPath).loadInto(warehouse);
+        std::cout << "Wczytano z: " << inputPath << '\n';
+        std::cout << "Kierowcy: " << warehouse.drivers().size() << '\n';
+
+        std::vector<model::Driver> drivers = warehouse.drivers();
+        std::sort(drivers.begin(), drivers.end(), assignment::DriverCapacityGreater());
+
+        // TODO: przydzial paczek (assignment), symulacja
+
+        io::OutputFile(outputPath).write(drivers);
+        std::cout << "Zapisano wynik do: " << outputPath << '\n';
+    } catch (const std::exception& error) {
+        std::cerr << "Blad: " << error.what() << '\n';
+        return 1;
+    }
 
     return 0;
 }

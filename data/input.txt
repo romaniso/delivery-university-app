@@ -1,0 +1,11 @@
+# Plik wejsciowy - format: patrz README.md, "Plik wejsciowy".
+#
+# DRIVER;imie i nazwisko;ladownosc_kg;dostepny (1/0)
+DRIVER;Jan Kowalski;500;1
+DRIVER;Anna Nowak;350;1
+DRIVER;Piotr Wisniewski;800;0
+DRIVER;Maria Wojcik;200;1
+DRIVER;Tomasz Kaminski;1200;0
+DRIVER;Katarzyna Lewandowska;650;1
+
+# TODO: DELIVERY;... (razem z klasa Delivery)

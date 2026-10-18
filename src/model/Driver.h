@@ -1,4 +1,4 @@
-// Kierowca - odpowiada wierszowi tabeli Driver.
+// Kierowca - przechowywany w pamieci przez storage::Warehouse.
 // Same dane, bez logiki (patrz README.md, src/model/).
 
 #pragma once
