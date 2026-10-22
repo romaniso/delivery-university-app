@@ -8,16 +8,15 @@
 #include <vector>
 
 #include "assignment/Comparators.h"
-#include "assignment/DeliveryManager.h"
 #include "enums/DeliveryStatus.h"
+#include "enums/Strategy.h"
 #include "io/InputFile.h"
 #include "io/OutputFile.h"
-#include "model/DriverDay.h"
+#include "simulation/Simulation.h"
 #include "storage/Warehouse.h"
 
-// Ile dni po ostatniej dostawie symulacja jeszcze probuje przydzielic paczki,
-// zanim sie podda (ochrona przed paczkami, ktore nigdy sie nie zmieszcza)
-const int EXTRA_DAYS = 30;
+// Strategia przydzialu. TODO: wybor strategii przez uzytkownika (CLI)
+const enums::Strategy STRATEGY = enums::Strategy::SCORE;
 
 int main(int argc, char* argv[]) {
     if (argc > 3) {
@@ -41,12 +40,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Kierowcy: " << warehouse.drivers().size() << '\n';
         std::cout << "Paczki: " << warehouse.deliveries().size() << '\n';
 
-        assignment::DeliveryManager deliveryManager(warehouse);
+        simulation::Simulation simulation(warehouse, STRATEGY);
 
-        const double maxCapacityKg = deliveryManager.maxAvailableCapacity();
-        int lastArrivalDay = 0;
+        const double maxCapacityKg = simulation.maxAvailableCapacity();
         for (const model::Delivery& delivery : warehouse.deliveries()) {
-            lastArrivalDay = std::max(lastArrivalDay, delivery.arrivalDay);
             if (maxCapacityKg > 0 && delivery.weightKg > maxCapacityKg) {
                 std::cout << "Uwaga: paczka " << delivery.id << " (" << delivery.weightKg
                           << " kg) nie zmiesci sie u zadnego dostepnego kierowcy (max "
@@ -57,36 +54,24 @@ int main(int argc, char* argv[]) {
             std::cout << "Uwaga: brak dostepnych kierowcow - zadna paczka nie zostanie przydzielona\n";
         }
 
-        // Petla po dniach ze strategia C (pelny score).
-        // TODO (etap 4): przeniesc do simulation/, strategie A/B, metryki
-        std::vector<model::DriverDay> driverDays;
-        int lastDay = 0;
-        for (int day = 1; day <= lastArrivalDay + EXTRA_DAYS; ++day) {
-            deliveryManager.driversAvailable();
-            deliveryManager.assign(day, assignment::ScoreOrder{warehouse, day});
-            deliveryManager.depart();
-            for (const model::DriverDay& driverDay : deliveryManager.deliver(day)) {
-                driverDays.push_back(driverDay);
-            }
-            lastDay = day;
-            if (day >= lastArrivalDay && !deliveryManager.hasWaitingDeliveries()) {
-                break;
-            }
-        }
+        std::cout << "Strategia: " << enums::toString(simulation.strategy()) << '\n';
+        simulation.run();
 
+        // TODO: metryki (sredni czas oczekiwania, spoznienia, wykorzystanie ladownosci)
         int delivered = 0;
         for (const model::Delivery& delivery : warehouse.deliveries()) {
             if (delivery.status == enums::DeliveryStatus::DELIVERED) {
                 ++delivered;
             }
         }
-        std::cout << "Dni symulacji: " << lastDay << '\n';
+        std::cout << "Dni symulacji: " << simulation.days() << '\n';
         std::cout << "Doreczone: " << delivered << " / " << warehouse.deliveries().size() << '\n';
 
         std::vector<model::Driver> drivers = warehouse.drivers();
         std::sort(drivers.begin(), drivers.end(), assignment::DriverCapacityGreater());
 
-        io::OutputFile(outputPath).write(warehouse, drivers, driverDays);
+        io::OutputFile(outputPath).write(warehouse, drivers, simulation.driverDays(),
+                                         simulation.strategy(), simulation.days());
         std::cout << "Zapisano wynik do: " << outputPath << '\n';
     } catch (const std::exception& error) {
         std::cerr << "Blad: " << error.what() << '\n';
