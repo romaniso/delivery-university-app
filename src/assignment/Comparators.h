@@ -4,6 +4,7 @@
 
 #include "assignment/DeliveryScore.h"
 #include "enums/DeliveryStatus.h"
+#include "enums/Priority.h"
 #include "model/Delivery.h"
 #include "model/Driver.h"
 #include "storage/Warehouse.h"
@@ -43,6 +44,37 @@ inline bool fifoBelow(const model::Delivery& a, const model::Delivery& b) {
     return a.id > b.id;
 }
 
+// Strategia A - kolejnosc przyjecia (klucz 2 to od razu klucz 3: arrivalDay, potem id).
+struct FifoOrder {
+    const storage::Warehouse& warehouse;
+
+    bool operator()(int aId, int bId) const {
+        const model::Delivery& a = warehouse.delivery(aId);
+        const model::Delivery& b = warehouse.delivery(bId);
+        if (isPostponed(a) != isPostponed(b)) {
+            return isPostponed(b);
+        }
+        return fifoBelow(a, b);
+    }
+};
+
+// Strategia B - sam priorytet: URGENT przed NORMAL.
+struct PriorityOrder {
+    const storage::Warehouse& warehouse;
+
+    bool operator()(int aId, int bId) const {
+        const model::Delivery& a = warehouse.delivery(aId);
+        const model::Delivery& b = warehouse.delivery(bId);
+        if (isPostponed(a) != isPostponed(b)) {
+            return isPostponed(b);
+        }
+        if (a.priority != b.priority) {
+            return a.priority == enums::Priority::NORMAL;
+        }
+        return fifoBelow(a, b);
+    }
+};
+
 // Strategia C - pelny score w danym dniu.
 // Kolejke budujemy od nowa kazdego dnia, bo score zmienia sie z dniem (aging, termin).
 struct ScoreOrder {
@@ -63,7 +95,5 @@ struct ScoreOrder {
         return fifoBelow(a, b);
     }
 };
-
-// TODO (etap 4): FifoOrder (A) i PriorityOrder (B) - te same klucze 1 i 3, inny klucz 2
 
 }  // namespace assignment

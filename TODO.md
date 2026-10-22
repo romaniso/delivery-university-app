@@ -6,10 +6,10 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
 ## Do ustalenia przed startem
 
 - [x] Jednostka czasu w programie: dni, numerowane od 1 (`arrivalDay`, `deadlineDay`, `deliveredDay` w `Delivery`).
-- [ ] Format rekordu `DELIVERY` w pliku wejściowym (propozycja: `DELIVERY;adres;waga_kg;NORMAL|URGENT;dzien_przyjecia;termin`).
+- [x] Format rekordu `DELIVERY` w pliku wejściowym: `DELIVERY;adres;waga_kg;NORMAL|URGENT;dzien_przyjecia;termin`.
 - [x] Kolejka kierowcy: jedna `std::queue<int>` z `id` paczek, ułożona wg strategii przy przydziale.
 - [x] Paczki, które się nie zmieściły: status `POSTPONED`, zostają w `Warehouse`, następnego dnia przed `WAITING`. Bez anulowania paczek.
-- [ ] Wagi w score: ile punktów za `URGENT`, za każdy dzień czekania, za zbliżający się termin.
+- [ ] Wagi w score: ile punktów za `URGENT`, za każdy dzień czekania, za zbliżający się termin (do ustalenia po porównaniu strategii na metrykach).
 
 ## Etap 0 — szkielet bez bazy danych
 
@@ -57,11 +57,12 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
 
 ## Etap 4 — symulacja (`src/simulation/`)
 
-- [ ] Pętla po dniach: przeniesienie z `main.cpp` (wersja tymczasowa dla strategii C) do `simulation/`.
-- [ ] Strategie jako różne komparatory/funktory:
-  - [ ] A — FIFO (kolejność przyjęcia, `std::queue`),
-  - [ ] B — sam priorytet,
-  - [ ] C — pełny score.
+- [x] Pętla po dniach: `simulation::Simulation` (jedna symulacja = jedna strategia, `run()`, `days()`, `driverDays()`).
+- [x] Strategie jako różne komparatory/funktory (`assignment/Comparators.h`) + `enums::Strategy`:
+  - [x] A — FIFO (kolejność przyjęcia, `FifoOrder`),
+  - [x] B — sam priorytet (`PriorityOrder`),
+  - [x] C — pełny score (`ScoreOrder`).
+- [ ] Wybór strategii przez użytkownika (teraz stała `STRATEGY` w `main.cpp`).
 - [ ] Metryki: średni czas oczekiwania, przekroczone terminy, wykorzystanie ładowności, paczki pozostałe w magazynie.
 - [ ] Zapis metryk do `output/` (CSV do wykresów).
 - [ ] Generator losowych plików wejściowych (stałe ziarno, żeby wyniki dało się powtórzyć).
