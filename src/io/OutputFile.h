@@ -10,6 +10,7 @@
 
 #include "enums/DeliveryStatus.h"
 #include "enums/Priority.h"
+#include "enums/Strategy.h"
 #include "model/Delivery.h"
 #include "model/Driver.h"
 #include "model/DriverDay.h"
@@ -23,15 +24,17 @@ public:
 
     // Kierowcy trafiaja do raportu w podanej kolejnosci - sortuje wywolujacy.
     // Kursy - w kolejnosci dni, tak jak zwraca je assignment::DeliveryManager::deliver().
+    // strategy i days - z symulacji, ktorej wynik zapisujemy (naglowek raportu).
     void write(const storage::Warehouse& warehouse, const std::vector<model::Driver>& drivers,
-               const std::vector<model::DriverDay>& driverDays) const {
+               const std::vector<model::DriverDay>& driverDays, enums::Strategy strategy,
+               int days) const {
         std::ofstream file(path_);
         if (!file) {
             throw std::runtime_error("Nie mozna zapisac pliku wyjsciowego: " + path_);
         }
         file << std::fixed << std::setprecision(1);
 
-        file << "Kolejka Paczek - raport\n\n";
+        writeHeader(file, warehouse.deliveries(), strategy, days);
         writeDrivers(file, drivers);
         writeDeliveries(file, warehouse.deliveries());
         writeDriverDays(file, warehouse, driverDays);
@@ -40,6 +43,25 @@ public:
 
 private:
     std::string path_;
+
+    // Naglowek z wyroznieniem strategii - zeby raporty z roznych strategii
+    // dalo sie od razu odroznic
+    static void writeHeader(std::ofstream& file, const std::vector<model::Delivery>& deliveries,
+                            enums::Strategy strategy, int days) {
+        int delivered = 0;
+        for (const model::Delivery& delivery : deliveries) {
+            if (delivery.status == enums::DeliveryStatus::DELIVERED) {
+                ++delivered;
+            }
+        }
+        const std::string line(50, '=');
+        file << line << '\n';
+        file << "Kolejka Paczek - raport\n";
+        file << "Strategia: " << enums::toString(strategy) << '\n';
+        file << "Symulacja: " << days << " dni, doreczone " << delivered << " / "
+             << deliveries.size() << " paczek\n";
+        file << line << "\n\n";
+    }
 
     static void writeDrivers(std::ofstream& file, const std::vector<model::Driver>& drivers) {
         file << "Kierowcy (wg ladownosci):\n";
