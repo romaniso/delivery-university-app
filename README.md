@@ -44,6 +44,7 @@ Kolejka Paczek
 Wczytano z: .../data/input.txt
 Kierowcy: 6
 Paczki: 30
+Strategia: C - pelny score
 Dni symulacji: 5
 Doreczone: 30 / 30
 Zapisano wynik do: .../output/result.txt
@@ -72,14 +73,15 @@ Blad: data/input.txt, linia 17: "urgent" nie jest priorytetem (NORMAL/URGENT)
 
 ## Plik wyjściowy
 
-Pliki w `output/` (ignorowane przez git). `output/result.txt` (na razie dla strategii C) zawiera:
+Pliki w `output/` (ignorowane przez git). `output/result.txt` (dla strategii ustawionej w `main.cpp`, domyślnie C) zawiera:
 
+- nagłówek ze strategią i podsumowaniem symulacji (liczba dni, doręczone paczki),
 - kierowców posortowanych wg ładowności,
 - paczki ze statusem końcowym, kierowcą i dniem doręczenia,
 - kursy dzień po dniu — dla każdego kierowcy obciążenie i lista adresów w kolejności doręczania,
 - paczki, które zostały w magazynie.
 
-Docelowo (etap 4) dochodzi porównanie strategii A/B/C i `output/metrics.csv` z metrykami dzień po dniu do wykresów.
+Do zrobienia: metryki, porównanie strategii A/B/C i `output/metrics.csv` z metrykami dzień po dniu do wykresów.
 
 Szczegóły: [Logika biznesowa → Metryki i wyniki](#metryki-i-wyniki).
 
@@ -104,6 +106,7 @@ Szczegóły: [Logika biznesowa → Metryki i wyniki](#metryki-i-wyniki).
 enums::Priority        NORMAL, URGENT
 enums::DeliveryStatus  WAITING, POSTPONED, ASSIGNED, IN_TRANSIT, DELIVERED
 enums::QueueStatus     OPEN, DEPARTED
+enums::Strategy        FIFO, PRIORITY, SCORE   (strategie A, B, C)
 
 model::Driver       id, name, capacityKg, isAvailable
 model::Delivery     id, address, weightKg, priority, arrivalDay, deadlineDay,
@@ -114,7 +117,7 @@ model::DriverDay    driverId, day, std::vector<int> deliveryIds, loadKg
 
 `DriverDay` to kurs kierowcy w jednym dniu. Zapisujemy go przy doręczeniu, bo kolejka kierowcy jest wtedy opróżniana, a raport potrzebuje kolejności doręczania.
 
-Gotowe: enumy, wszystkie klasy modelu, `Warehouse` z kierowcami i paczkami oraz `assignment::DeliveryManager` (przydział i zdarzenia dnia).
+Gotowe: enumy, wszystkie klasy modelu, `Warehouse` z kierowcami i paczkami , `assignment::DeliveryManager` (przydział i zdarzenia dnia), strategie A/B/C oraz `simulation::Simulation` (pętla po dniach).
 
 `storage::Warehouse` trzyma `std::vector` kierowców i paczek oraz wyszukuje je po `id` (`driver(id)`, `delivery(id)` — zwracają referencję, zły `id` rzuca `std::out_of_range`). Da się go skopiować, więc każda strategia (A, B, C) działa na własnej kopii tych samych danych.
 
@@ -238,7 +241,15 @@ dla dziś = 1, 2, ...:
             albo minęło ostatniDzieńPrzyjęcia + 30 dni (ochrona przed paczkami, które nigdy się nie zmieszczą)
 ```
 
-`main` uruchamia tę pętlę trzy razy — po jednej kopii `Warehouse` na strategię.
+Pętlę prowadzi `simulation::Simulation` (`simulation/Simulation.h`): jedna symulacja = jedna strategia (`enums::Strategy`), wybierana w `main.cpp` stałą `STRATEGY`. `Simulation::assign` wybiera funktor dla strategii (`FifoOrder`, `PriorityOrder`, `ScoreOrder`) i przekazuje go do `DeliveryManager::assign`.
+
+Żeby porównać strategie, uruchamiamy trzy symulacje, każdą na własnej kopii `Warehouse`:
+
+```cpp
+storage::Warehouse copy = warehouse;
+simulation::Simulation simulation(copy, enums::Strategy::FIFO);
+simulation.run();
+```
 
 ### Przypadki brzegowe
 
@@ -289,7 +300,7 @@ app/
 │   ├── storage/            magazyn danych w pamięci
 │   ├── io/                 odczyt pliku wejściowego i zapis pliku wyjściowego
 │   ├── assignment/         score, strategie, DeliveryManager (przydział assign() i zdarzenia dnia)
-│   └── simulation/         symulacja dni pracy, strategie, metryki
+│   └── simulation/         symulacja dzień po dniu dla wybranej strategii
 ├── data/                   pliki wejściowe (input.txt)
 ├── output/                 pliki wyjściowe (ignorowane przez git)
 └── .vscode/                wspólne ustawienia edytora
@@ -304,7 +315,7 @@ app/
 | `src/storage/` | `Warehouse` — listy kierowców i paczek w pamięci (`std::vector`), nadawanie kolejnych `id`. | 2 | model |
 | `src/io/` | `InputFile` — wczytanie pliku wejściowego do `Warehouse`. `OutputFile` — zapis raportu do pliku wyjściowego. | 2 | model, storage |
 | `src/assignment/` | `DeliveryScore.h` — `deliveryScore()` (priorytet + aging + deadline). `Comparators.h` — funktory dla `std::sort` i `std::priority_queue` (strategie). `DeliveryManager.h` — kolejki kierowców (`std::queue`), zachłanny `assign()` z odkładaniem paczek (`POSTPONED`), zdarzenia `DRIVER_AVAILABLE`, `NEW_DELIVERY`, `DEPART`, `DELIVERED`. | 3 | storage |
-| `src/simulation/` | Symulacja kilku dni, strategie A (FIFO) / B (priorytet) / C (pełny score), generator losowych plików wejściowych, metryki zapisywane do `output/`. | 4 | assignment, io |
+| `src/simulation/` | `Simulation` — pętla po dniach dla wybranej strategii A (FIFO) / B (priorytet) / C (pełny score), kursy kierowców do raportu. Do zrobienia: metryki zapisywane do `output/`, generator losowych plików wejściowych. | 4 | assignment |
 
 Kierunek zależności idzie **w dół tabeli**: `enums` nie zależy od niczego, `model` nie wie nic o magazynie, `storage` nie wie nic o plikach itd. Dzięki temu moduły można robić równolegle, jeśli wcześniej uzgodnimy interfejsy (nagłówki `.h`).
 
