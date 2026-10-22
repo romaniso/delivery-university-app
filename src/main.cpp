@@ -31,13 +31,14 @@ int main(int argc, char* argv[]) {
         io::InputFile(inputPath).loadInto(warehouse);
         std::cout << "Wczytano z: " << inputPath << '\n';
         std::cout << "Kierowcy: " << warehouse.drivers().size() << '\n';
+        std::cout << "Paczki: " << warehouse.deliveries().size() << '\n';
 
         std::vector<model::Driver> drivers = warehouse.drivers();
         std::sort(drivers.begin(), drivers.end(), assignment::DriverCapacityGreater());
 
         // TODO: przydzial paczek (assignment), symulacja
 
-        io::OutputFile(outputPath).write(drivers);
+        io::OutputFile(outputPath).write(drivers, warehouse.deliveries());
         std::cout << "Zapisano wynik do: " << outputPath << '\n';
     } catch (const std::exception& error) {
         std::cerr << "Blad: " << error.what() << '\n';
