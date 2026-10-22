@@ -1,0 +1,12 @@
+# Przypadek brzegowy: same paczki URGENT - priorytet ich nie rozroznia.
+# Oczekiwane: o kolejnosci decyduje termin (i aging); dzien 1: paczki z terminem 1 i 2,
+# reszta POSTPONED i doreczana w kolejnych dniach przed nowymi paczkami.
+# Paczka 5 (przyjeta w dniu 2, termin 2) jedzie dopiero w dniu 3 - spozniona,
+# bo paczki POSTPONED zawsze ida przed WAITING.
+DRIVER;Jan Kowalski;300;1
+
+DELIVERY;ul. Dluga 5, Krakow;120;URGENT;1;5
+DELIVERY;ul. Florianska 12, Krakow;120;URGENT;1;1
+DELIVERY;ul. Wielicka 44, Krakow;120;URGENT;1;3
+DELIVERY;ul. Mogilska 15, Krakow;120;URGENT;1;2
+DELIVERY;ul. Opolska 100, Krakow;120;URGENT;2;2

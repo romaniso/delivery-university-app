@@ -1,0 +1,10 @@
+# Przypadek brzegowy: paczka URGENT, gdy jedyny kierowca jest juz pelny.
+# Dzien 1: paczka 1 (URGENT, termin dzis) ma wyzszy score i zajmuje auto;
+#          paczka 2 (URGENT, 120 kg) sie nie miesci -> POSTPONED.
+# Dzien 2: paczka 2 (POSTPONED) idzie przed nowa paczka 3 (WAITING, termin dzis);
+#          paczka 3 sie nie miesci -> POSTPONED, doreczona w dniu 3.
+DRIVER;Maria Wojcik;200;1
+
+DELIVERY;ul. Florianska 12, Krakow;150;URGENT;1;1
+DELIVERY;ul. Wielicka 44, Krakow;120;URGENT;1;3
+DELIVERY;ul. Mogilska 15, Krakow;180;NORMAL;2;2
