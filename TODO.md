@@ -37,26 +37,27 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
 
 ## Etap 3 — przydział (`src/assignment/`)
 
-- [ ] `OutputFile`: przydział paczek do kierowców (lista adresów dla każdego), paczki pozostałe w magazynie, podsumowanie.
-
-- [ ] Funkcja score: priorytet + aging (czas oczekiwania) + bliskość terminu.
-- [ ] Funktor `ScoreOrder` dla `std::priority_queue` (uwaga: `true` = a ma być niżej niż b; `POSTPONED` zawsze przed `WAITING`).
-- [ ] Kolejka paczek czekających: `std::priority_queue<int, std::vector<int>, ScoreOrder>` z `id` paczek `WAITING` i `POSTPONED`, budowana od nowa każdego dnia.
-- [ ] Zachłanny `assign()`: zdejmuj paczkę z góry kolejki, przydziel dostępnemu kierowcy z wolnym miejscem (push do `deliveries`); jeśli nikt jej nie weźmie — `POSTPONED`.
-- [ ] Zdarzenia:
-  - [ ] `NEW_DELIVERY` — nowa paczka do kolejki priorytetowej.
-  - [ ] `DRIVER_AVAILABLE` — kierowca wraca, ponowny `assign()`.
-  - [ ] `DEPART` — kolejka kierowcy zamknięta (`DEPARTED`), nic do niej nie dokładamy.
-  - [ ] `DELIVERED` — zdejmowanie paczek z kolejki kierowcy, zmiana statusu.
-- [ ] Przypadki brzegowe (każdy jako osobny plik w `data/`, np. `data/edge-heavy.txt`):
-  - [ ] paczka cięższa niż każdy kierowca,
-  - [ ] brak dostępnych kierowców,
-  - [ ] paczka `URGENT`, gdy wszystkie kolejki są `DEPARTED`,
-  - [ ] same paczki `URGENT`.
+- [x] `OutputFile`: kursy dzień po dniu (lista adresów każdego kierowcy w kolejności doręczania), paczki pozostałe w magazynie; w tabeli paczek kierowca i dzień doręczenia.
+- [x] `model::DriverDay` — kurs kierowcy w jednym dniu (zapisany przy doręczeniu, do raportu).
+- [x] Funkcja score: priorytet + aging (czas oczekiwania) + bliskość terminu (`assignment/DeliveryScore.h`).
+- [x] Funktor `ScoreOrder` dla `std::priority_queue` (uwaga: `true` = a ma być niżej niż b; `POSTPONED` zawsze przed `WAITING`).
+- [x] Kolejka paczek czekających: `std::priority_queue<int, std::vector<int>, ScoreOrder>` z `id` paczek `WAITING` i `POSTPONED`, budowana od nowa każdego dnia.
+- [x] Zachłanny `assign()` w `assignment::DeliveryManager`: zdejmuj paczkę z góry kolejki, przydziel kierowcy metodą best fit (push do `deliveries`); jeśli nikt jej nie weźmie — `POSTPONED`.
+- [x] Zdarzenia (metody `DeliveryManager`):
+  - [x] `NEW_DELIVERY` — filtr `arrivalDay <= dziś` w `assign()`.
+  - [x] `DRIVER_AVAILABLE` — `driversAvailable()`: kierowca wraca, kolejka znów `OPEN`.
+  - [x] `DEPART` — `depart()`: kolejka kierowcy zamknięta (`DEPARTED`), paczki `IN_TRANSIT`.
+  - [x] `DELIVERED` — `deliver()`: zdejmowanie paczek z kolejki kierowcy, `DELIVERED`, zwraca `DriverDay`.
+- [x] Ostrzeżenie po wczytaniu: paczka cięższa niż każdy dostępny kierowca / brak dostępnych kierowców.
+- [x] Przypadki brzegowe (każdy jako osobny plik w `data/`):
+  - [x] `edge-heavy.txt` — paczka cięższa niż każdy kierowca,
+  - [x] `edge-no-drivers.txt` — brak dostępnych kierowców,
+  - [x] `edge-full.txt` — paczka `URGENT`, gdy jedyny kierowca jest pełny,
+  - [x] `edge-all-urgent.txt` — same paczki `URGENT`.
 
 ## Etap 4 — symulacja (`src/simulation/`)
 
-- [ ] Pętla po dniach: nowe paczki, przydział, wyjazdy, doręczenia, aging pozostałych.
+- [ ] Pętla po dniach: przeniesienie z `main.cpp` (wersja tymczasowa dla strategii C) do `simulation/`.
 - [ ] Strategie jako różne komparatory/funktory:
   - [ ] A — FIFO (kolejność przyjęcia, `std::queue`),
   - [ ] B — sam priorytet,
@@ -67,6 +68,7 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
 
 ## Etap 5 — oddanie projektu
 
+- [ ] CLI: dodać input uzytkownika do wskazania pliku wejściowego z foldera data; zamienić format pliku wejściowego oraz wyjściowego na csv
 - [ ] README: aktualny format pliku wejściowego, przykładowy wynik, opis strategii.
 - [ ] Porównanie strategii A/B/C na tych samych danych (tabela lub wykres z CSV).
 - [ ] Przegląd wymagań: `std::vector`, `std::queue`, `std::priority_queue`, `std::sort`, własne komparatory/funktory — każde użyte i opisane.

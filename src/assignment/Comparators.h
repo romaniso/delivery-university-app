@@ -2,7 +2,11 @@
 
 #pragma once
 
+#include "assignment/DeliveryScore.h"
+#include "enums/DeliveryStatus.h"
+#include "model/Delivery.h"
 #include "model/Driver.h"
+#include "storage/Warehouse.h"
 
 namespace assignment {
 
@@ -17,6 +21,49 @@ struct DriverCapacityGreater {
     }
 };
 
-// TODO: komparator score paczek dla std::priority_queue (razem z klasa Delivery)
+// ---------------------------------------------------------------------------
+// Strategie kolejnosci paczek - funktory dla std::priority_queue<int, ...> z id paczek.
+// operator()(a, b) zwraca true, gdy paczka a ma byc NIZEJ niz b (na gorze jest "najwieksza").
+//
+// Kazda strategia porownuje w tej samej kolejnosci kluczy (README.md, "Score i strategie"):
+//   1. POSTPONED przed WAITING,
+//   2. klucz strategii,
+//   3. remis: wczesniejszy arrivalDay, potem mniejsze id.
+// ---------------------------------------------------------------------------
+
+inline bool isPostponed(const model::Delivery& delivery) {
+    return delivery.status == enums::DeliveryStatus::POSTPONED;
+}
+
+// Klucz 3: a nizej niz b, gdy przyszla pozniej (przy tym samym dniu - wieksze id)
+inline bool fifoBelow(const model::Delivery& a, const model::Delivery& b) {
+    if (a.arrivalDay != b.arrivalDay) {
+        return a.arrivalDay > b.arrivalDay;
+    }
+    return a.id > b.id;
+}
+
+// Strategia C - pelny score w danym dniu.
+// Kolejke budujemy od nowa kazdego dnia, bo score zmienia sie z dniem (aging, termin).
+struct ScoreOrder {
+    const storage::Warehouse& warehouse;
+    int today;
+
+    bool operator()(int aId, int bId) const {
+        const model::Delivery& a = warehouse.delivery(aId);
+        const model::Delivery& b = warehouse.delivery(bId);
+        if (isPostponed(a) != isPostponed(b)) {
+            return isPostponed(b);
+        }
+        int aScore = deliveryScore(a, today);
+        int bScore = deliveryScore(b, today);
+        if (aScore != bScore) {
+            return aScore < bScore;
+        }
+        return fifoBelow(a, b);
+    }
+};
+
+// TODO (etap 4): FifoOrder (A) i PriorityOrder (B) - te same klucze 1 i 3, inny klucz 2
 
 }  // namespace assignment

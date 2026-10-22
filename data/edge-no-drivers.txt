@@ -1,0 +1,8 @@
+# Przypadek brzegowy: zaden kierowca nie jest dostepny.
+# Oczekiwane: ostrzezenie po wczytaniu, zadnych kursow, wszystkie paczki POSTPONED do limitu dni.
+DRIVER;Jan Kowalski;500;0
+DRIVER;Anna Nowak;350;0
+
+DELIVERY;ul. Dluga 5, Krakow;120;NORMAL;1;3
+DELIVERY;ul. Florianska 12, Krakow;80;URGENT;1;1
+DELIVERY;ul. Wielicka 44, Krakow;200;NORMAL;2;5

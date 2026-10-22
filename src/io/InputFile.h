@@ -8,7 +8,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "enums/Priority.h"
@@ -20,7 +19,7 @@ namespace io {
 
 class InputFile {
 public:
-    explicit InputFile(std::string path) : path_(std::move(path)) {}
+    explicit InputFile(const std::string& path) : path_(path) {}
 
     // Wczytuje wszystkie rekordy do magazynu. Przy bledzie rzuca std::runtime_error
     // z numerem linii.
