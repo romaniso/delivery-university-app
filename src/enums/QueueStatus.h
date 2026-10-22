@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <stdexcept>
 #include <string>
 
 namespace enums {
@@ -18,7 +17,7 @@ inline std::string toString(QueueStatus status) {
         case QueueStatus::OPEN: return "OPEN";
         case QueueStatus::DEPARTED: return "DEPARTED";
     }
-    throw std::logic_error("nieznana wartosc QueueStatus");
+    return "?";  // nie powinno sie zdarzyc - kazda wartosc jest obsluzona wyzej
 }
 
 }

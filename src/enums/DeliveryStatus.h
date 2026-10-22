@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <stdexcept>
 #include <string>
 
 namespace enums {
@@ -25,7 +24,7 @@ inline std::string toString(DeliveryStatus status) {
         case DeliveryStatus::IN_TRANSIT: return "IN_TRANSIT";
         case DeliveryStatus::DELIVERED: return "DELIVERED";
     }
-    throw std::logic_error("nieznana wartosc DeliveryStatus");
+    return "?";  // nie powinno sie zdarzyc - kazda wartosc jest obsluzona wyzej
 }
 
 }

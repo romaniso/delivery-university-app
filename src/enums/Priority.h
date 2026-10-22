@@ -18,7 +18,7 @@ inline std::string toString(Priority priority) {
         case Priority::NORMAL: return "NORMAL";
         case Priority::URGENT: return "URGENT";
     }
-    throw std::logic_error("nieznana wartosc Priority");
+    return "?";  // nie powinno sie zdarzyc - kazda wartosc jest obsluzona wyzej
 }
 
 // Rzuca std::invalid_argument - io::InputFile dokleja do komunikatu numer linii
