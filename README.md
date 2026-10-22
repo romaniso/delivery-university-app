@@ -44,6 +44,8 @@ Kolejka Paczek
 Wczytano z: .../data/input.txt
 Kierowcy: 6
 Paczki: 30
+Dni symulacji: 5
+Doreczone: 30 / 30
 Zapisano wynik do: .../output/result.txt
 ```
 
@@ -70,10 +72,14 @@ Blad: data/input.txt, linia 17: "urgent" nie jest priorytetem (NORMAL/URGENT)
 
 ## Plik wyjściowy
 
-Pliki w `output/` (ignorowane przez git). Na razie raport zawiera listę kierowców posortowaną wg ładowności i listę wczytanych paczek. Docelowo:
+Pliki w `output/` (ignorowane przez git). `output/result.txt` (na razie dla strategii C) zawiera:
 
-- `output/result.txt` — kierowcy, dla każdego dnia i kierowcy lista adresów, paczki pozostałe w magazynie i porównanie strategii A/B/C,
-- `output/metrics.csv` — metryki dzień po dniu do wykresów.
+- kierowców posortowanych wg ładowności,
+- paczki ze statusem końcowym, kierowcą i dniem doręczenia,
+- kursy dzień po dniu — dla każdego kierowcy obciążenie i lista adresów w kolejności doręczania,
+- paczki, które zostały w magazynie.
+
+Docelowo (etap 4) dochodzi porównanie strategii A/B/C i `output/metrics.csv` z metrykami dzień po dniu do wykresów.
 
 Szczegóły: [Logika biznesowa → Metryki i wyniki](#metryki-i-wyniki).
 
@@ -103,9 +109,12 @@ model::Driver       id, name, capacityKg, isAvailable
 model::Delivery     id, address, weightKg, priority, arrivalDay, deadlineDay,
                     status = WAITING, driverId = 0, deliveredDay = 0
 model::DriverQueue  driverId, std::queue<int> deliveries, status = OPEN, loadKg = 0
+model::DriverDay    driverId, day, std::vector<int> deliveryIds, loadKg
 ```
 
-Gotowe: enumy, `Driver`, `Delivery` i `DriverQueue` oraz `Warehouse` z kierowcami i paczkami.
+`DriverDay` to kurs kierowcy w jednym dniu. Zapisujemy go przy doręczeniu, bo kolejka kierowcy jest wtedy opróżniana, a raport potrzebuje kolejności doręczania.
+
+Gotowe: enumy, wszystkie klasy modelu, `Warehouse` z kierowcami i paczkami oraz `assignment::DeliveryManager` (przydział i zdarzenia dnia).
 
 `storage::Warehouse` trzyma `std::vector` kierowców i paczek oraz wyszukuje je po `id` (`driver(id)`, `delivery(id)` — zwracają referencję, zły `id` rzuca `std::out_of_range`). Da się go skopiować, więc każda strategia (A, B, C) działa na własnej kopii tych samych danych.
 
@@ -160,7 +169,7 @@ punktyTermin    = max(0, 60 - 20 * (termin - dziś))
 |----------------|-----|---|---|----------|----------------|----|
 | punktyTermin | 0 | 20 | 40 | 60 | 80 | 100 |
 
-Wagi są stałymi na górze `assignment/Score.h`. Paczka `NORMAL` czekająca 10 dni dogania świeżą `URGENT`, więc żadna paczka nie czeka w nieskończoność.
+Wagi są stałymi na górze `assignment/DeliveryScore.h`. Paczka `NORMAL` czekająca 10 dni dogania świeżą `URGENT`, więc żadna paczka nie czeka w nieskończoność.
 
 Przykład dla dnia 3:
 
@@ -172,7 +181,7 @@ Przykład dla dnia 3:
 
 Kolejność wg samego score: P2, P1, P3. Ale P1 i P3 czekają od wcześniejszych dni (`POSTPONED`), a P2 przyszła dziś (`WAITING`), więc ostatecznie: **P1, P3, P2**.
 
-Strategie to funktory w `assignment/Strategies.h`. `std::priority_queue` trzyma na górze „największy” element, więc `operator()(a, b)` zwraca `true`, gdy **a ma być niżej niż b**.
+Strategie to funktory w `assignment/Comparators.h`. `std::priority_queue` trzyma na górze „największy” element, więc `operator()(a, b)` zwraca `true`, gdy **a ma być niżej niż b**.
 
 Każda strategia porównuje paczki w tej samej kolejności kluczy:
 
@@ -188,7 +197,9 @@ Każda strategia porównuje paczki w tej samej kolejności kluczy:
 
 ### Przydział — `assign()`
 
-Zachłanny algorytm, wspólny dla wszystkich strategii (szablon na typ strategii):
+Przydział i zdarzenia dnia to metody klasy `assignment::DeliveryManager` (`assignment/DeliveryManager.h`). Menedżer doręczeń trzyma kolejki kierowców (`DriverQueue`, po jednej na kierowcę) i zmienia paczki w `Warehouse`. Sam `Warehouse` tylko przechowuje dane.
+
+`DeliveryManager::assign(dziś, strategia)` — zachłanny algorytm, wspólny dla wszystkich strategii (szablon na typ strategii):
 
 ```
 1. Wszystkie paczki WAITING i POSTPONED z arrivalDay <= dziś → std::priority_queue<int, std::vector<int>, Strategia>.
@@ -208,12 +219,12 @@ Paczki trafiają do `deliveries` w kolejności zdejmowania z kolejki priorytetow
 
 ### Zdarzenia i cykl dnia
 
-| Zdarzenie | Kiedy | Co się dzieje |
-|-----------|-------|---------------|
-| `DRIVER_AVAILABLE` | początek dnia, kierowcy wracający z wczoraj | kolejka znów `OPEN`, `loadKg = 0`. Kierowca z `dostępny = 0` w pliku jest niedostępny przez całą symulację |
-| `NEW_DELIVERY` | początek dnia, paczki z `arrivalDay == dziś` | stają się widoczne dla `assign()` |
-| `DEPART` | po `assign()` | każda niepusta kolejka → `DEPARTED`, jej paczki → `IN_TRANSIT` |
-| `DELIVERED` | koniec dnia | opróżnienie `deliveries` od początku, paczki → `DELIVERED`. Ta kolejność to lista adresów kierowcy w raporcie |
+| Zdarzenie | Metoda `DeliveryManager` | Kiedy | Co się dzieje |
+|-----------|---------------------|-------|---------------|
+| `DRIVER_AVAILABLE` | `driversAvailable()` | początek dnia, kierowcy wracający z wczoraj | kolejka znów `OPEN`, `loadKg = 0`. Kierowca z `dostępny = 0` w pliku jest niedostępny przez całą symulację |
+| `NEW_DELIVERY` | — (filtr w `assign()`) | początek dnia, paczki z `arrivalDay == dziś` | są `WAITING` od wczytania pliku; `assign()` bierze tylko paczki z `arrivalDay <= dziś`, więc od dziś są widoczne |
+| `DEPART` | `depart()` | po `assign()` | każda niepusta kolejka → `DEPARTED`, jej paczki → `IN_TRANSIT` |
+| `DELIVERED` | `deliver(dziś)` | koniec dnia | opróżnienie `deliveries` od początku, paczki → `DELIVERED`, `deliveredDay = dziś`. Zwraca `DriverDay` z kolejnością doręczania do raportu |
 
 ```
 dla dziś = 1, 2, ...:
@@ -233,10 +244,10 @@ dla dziś = 1, 2, ...:
 
 | Plik | Sytuacja | Oczekiwany wynik |
 |------|----------|------------------|
-| `data/edge-heavy.txt` | paczka cięższa niż ładowność każdego kierowcy | zostaje `POSTPONED` do limitu dni, w raporcie jako „nie mieści się u żadnego kierowcy”; ostrzeżenie po wczytaniu |
-| `data/edge-no-drivers.txt` | wszyscy kierowcy `dostępny = 0` | nic nie zostaje przydzielone, koniec po limicie dni |
+| `data/edge-heavy.txt` | paczka cięższa niż ładowność każdego kierowcy | ostrzeżenie po wczytaniu; paczka zostaje `POSTPONED` do limitu dni i trafia do „Zostały w magazynie”, reszta jest doręczana normalnie |
+| `data/edge-no-drivers.txt` | wszyscy kierowcy `dostępny = 0` | ostrzeżenie po wczytaniu, żadnych kursów, koniec po limicie dni |
 | `data/edge-full.txt` | paczka `URGENT`, gdy wszyscy kierowcy są pełni | `POSTPONED`; następnego dnia idzie przed wszystkimi paczkami `WAITING` |
-| `data/edge-all-urgent.txt` | same paczki `URGENT` | priorytet ich nie rozróżnia — decyduje `POSTPONED`, aging i termin; strategia B działa jak A |
+| `data/edge-all-urgent.txt` | same paczki `URGENT` | priorytet ich nie rozróżnia — decyduje `POSTPONED`, aging i termin; strategia B działa jak A. Paczka przyjęta w dniu 2 z terminem 2 jedzie w dniu 3 (spóźniona), bo `POSTPONED` idą przed `WAITING` |
 
 ### Metryki i wyniki
 
@@ -263,7 +274,7 @@ Projekt korzysta z dedykowanych kontenerów i algorytmów STL zamiast własnych 
 | `std::priority_queue` | Paczki czekające w magazynie (`id`), budowana od nowa każdego dnia — na górze paczka najważniejsza wg wybranej strategii |
 | `std::queue` | Kolejka paczek kierowcy (FIFO) — gotowa lista w kolejności ze strategii |
 | `std::sort` | Kierowcy wg ładowności w pliku wyjściowym |
-| Własne komparatory / funktory | `assignment/Comparators.h` — `DriverCapacityGreater` dla `std::sort`; `assignment/Strategies.h` — `FifoOrder`, `PriorityOrder`, `ScoreOrder` dla `std::priority_queue` |
+| Własne komparatory / funktory | `assignment/Comparators.h` — `DriverCapacityGreater` dla `std::sort` oraz strategie `FifoOrder`, `PriorityOrder`, `ScoreOrder` dla `std::priority_queue` |
 
 ## Struktura folderów
 
@@ -277,7 +288,7 @@ app/
 │   ├── model/              klasy z danymi
 │   ├── storage/            magazyn danych w pamięci
 │   ├── io/                 odczyt pliku wejściowego i zapis pliku wyjściowego
-│   ├── assignment/         score, komparatory, algorytm przydziału assign(), obsługa zdarzeń
+│   ├── assignment/         score, strategie, DeliveryManager (przydział assign() i zdarzenia dnia)
 │   └── simulation/         symulacja dni pracy, strategie, metryki
 ├── data/                   pliki wejściowe (input.txt)
 ├── output/                 pliki wyjściowe (ignorowane przez git)
@@ -292,7 +303,7 @@ app/
 | `src/model/` | `Driver`, `DriverQueue`, `Delivery`. Same dane, bez logiki. | 1 | enums |
 | `src/storage/` | `Warehouse` — listy kierowców i paczek w pamięci (`std::vector`), nadawanie kolejnych `id`. | 2 | model |
 | `src/io/` | `InputFile` — wczytanie pliku wejściowego do `Warehouse`. `OutputFile` — zapis raportu do pliku wyjściowego. | 2 | model, storage |
-| `src/assignment/` | Liczenie score (priorytet + aging + deadline), komparatory/funktory, `std::priority_queue` paczek, kolejki kierowców (`std::queue`), zachłanny `assign()`, zdarzenia `NEW_DELIVERY`, `DRIVER_AVAILABLE`, `DEPART`, `DELIVERED`, odkładanie paczek (`POSTPONED`). | 3 | storage |
+| `src/assignment/` | `DeliveryScore.h` — `deliveryScore()` (priorytet + aging + deadline). `Comparators.h` — funktory dla `std::sort` i `std::priority_queue` (strategie). `DeliveryManager.h` — kolejki kierowców (`std::queue`), zachłanny `assign()` z odkładaniem paczek (`POSTPONED`), zdarzenia `DRIVER_AVAILABLE`, `NEW_DELIVERY`, `DEPART`, `DELIVERED`. | 3 | storage |
 | `src/simulation/` | Symulacja kilku dni, strategie A (FIFO) / B (priorytet) / C (pełny score), generator losowych plików wejściowych, metryki zapisywane do `output/`. | 4 | assignment, io |
 
 Kierunek zależności idzie **w dół tabeli**: `enums` nie zależy od niczego, `model` nie wie nic o magazynie, `storage` nie wie nic o plikach itd. Dzięki temu moduły można robić równolegle, jeśli wcześniej uzgodnimy interfejsy (nagłówki `.h`).
