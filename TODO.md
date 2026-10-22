@@ -30,12 +30,14 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
 
 ## Etap 2 — dane i pliki (`src/storage/`, `src/io/`, `data/`)
 
-- [ ] `Warehouse::addDelivery`, wyszukiwanie kierowcy i paczki po `id`.
-- [ ] `InputFile`: obsługa rekordu `DELIVERY` (walidacja jak przy `DRIVER`, z numerem linii).
-- [ ] `data/input.txt`: ~30 paczek NORMAL/URGENT, łącznie więcej kg niż suma ładowności dostępnych kierowców.
-- [ ] `OutputFile`: przydział paczek do kierowców (lista adresów dla każdego), paczki pozostałe w magazynie, podsumowanie.
+- [x] `Warehouse::addDelivery`, wyszukiwanie kierowcy i paczki po `id`.
+- [x] `InputFile`: obsługa rekordu `DELIVERY` (walidacja jak przy `DRIVER`, z numerem linii).
+- [x] `data/input.txt`: 30 paczek NORMAL/URGENT w dniach 1–5, łącznie więcej kg niż suma ładowności dostępnych kierowców (dni 1 i 3 powyżej 1700 kg).
+- [x] `OutputFile`: lista wczytanych paczek.
 
 ## Etap 3 — przydział (`src/assignment/`)
+
+- [ ] `OutputFile`: przydział paczek do kierowców (lista adresów dla każdego), paczki pozostałe w magazynie, podsumowanie.
 
 - [ ] Funkcja score: priorytet + aging (czas oczekiwania) + bliskość terminu.
 - [ ] Funktor `ScoreOrder` dla `std::priority_queue` (uwaga: `true` = a ma być niżej niż b; `POSTPONED` zawsze przed `WAITING`).

@@ -43,6 +43,7 @@ Oczekiwany wynik w konsoli:
 Kolejka Paczek
 Wczytano z: .../data/input.txt
 Kierowcy: 6
+Paczki: 30
 Zapisano wynik do: .../output/result.txt
 ```
 
@@ -59,13 +60,17 @@ DRIVER;Piotr Wisniewski;800;0
 DELIVERY;ul. Długa 5, Kraków;12.5;URGENT;1;2
 ```
 
-Na razie program obsługuje tylko `DRIVER`. `DELIVERY` dochodzi w etapie 2 — pola i walidacja: [Logika biznesowa → Rekordy w pliku wejściowym](#rekordy-w-pliku-wejściowym).
+Pola i walidacja: [Logika biznesowa → Rekordy w pliku wejściowym](#rekordy-w-pliku-wejściowym).
 
-Błędna linia (zły typ, brak pola, liczba, której nie da się odczytać) przerywa program z komunikatem zawierającym numer linii.
+Błędna linia (zły typ, brak pola, liczba, której nie da się odczytać, wartość spoza zakresu) przerywa program z komunikatem zawierającym numer linii, np.:
+
+```
+Blad: data/input.txt, linia 17: "urgent" nie jest priorytetem (NORMAL/URGENT)
+```
 
 ## Plik wyjściowy
 
-Pliki w `output/` (ignorowane przez git). Na razie raport zawiera tylko listę kierowców posortowaną wg ładowności. Docelowo:
+Pliki w `output/` (ignorowane przez git). Na razie raport zawiera listę kierowców posortowaną wg ładowności i listę wczytanych paczek. Docelowo:
 
 - `output/result.txt` — kierowcy, dla każdego dnia i kierowcy lista adresów, paczki pozostałe w magazynie i porównanie strategii A/B/C,
 - `output/metrics.csv` — metryki dzień po dniu do wykresów.
@@ -100,9 +105,9 @@ model::Delivery     id, address, weightKg, priority, arrivalDay, deadlineDay,
 model::DriverQueue  driverId, std::queue<int> deliveries, status = OPEN, loadKg = 0
 ```
 
-Gotowe: enumy oraz `Driver`, `Delivery` i `DriverQueue`.
+Gotowe: enumy, `Driver`, `Delivery` i `DriverQueue` oraz `Warehouse` z kierowcami i paczkami.
 
-`storage::Warehouse` trzyma `std::vector` kierowców i paczek oraz wyszukuje je po `id`. Da się go skopiować, więc każda strategia (A, B, C) działa na własnej kopii tych samych danych.
+`storage::Warehouse` trzyma `std::vector` kierowców i paczek oraz wyszukuje je po `id` (`driver(id)`, `delivery(id)` — zwracają referencję, zły `id` rzuca `std::out_of_range`). Da się go skopiować, więc każda strategia (A, B, C) działa na własnej kopii tych samych danych.
 
 ### Rekordy w pliku wejściowym
 
