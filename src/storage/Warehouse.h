@@ -3,9 +3,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
 #include "model/Delivery.h"
@@ -33,27 +30,19 @@ public:
     // Wyszukiwanie po id. Id nadajemy po kolei i nic nie usuwamy,
     // wiec element o id n lezy pod indeksem n - 1.
     // Zwraca referencje - zmiany (np. status paczki) trafiaja prosto do magazynu.
-    model::Driver& driver(int id) {
-        checkId(id, drivers_.size(), "kierowcy");
-        return drivers_[id - 1];
-    }
+    // at() sprawdza indeks - zly id rzuca std::out_of_range.
+    model::Driver& driver(int id) { return drivers_.at(id - 1); }
+    model::Delivery& delivery(int id) { return deliveries_.at(id - 1); }
 
-    model::Delivery& delivery(int id) {
-        checkId(id, deliveries_.size(), "paczki");
-        return deliveries_[id - 1];
-    }
+    // Wersje tylko do odczytu - np. dla strategii, ktore porownuja paczki
+    const model::Driver& driver(int id) const { return drivers_.at(id - 1); }
+    const model::Delivery& delivery(int id) const { return deliveries_.at(id - 1); }
 
 private:
     std::vector<model::Driver> drivers_;
     std::vector<model::Delivery> deliveries_;
     int nextDriverId_ = 1;
     int nextDeliveryId_ = 1;
-
-    static void checkId(int id, std::size_t count, const std::string& what) {
-        if (id < 1 || static_cast<std::size_t>(id) > count) {
-            throw std::out_of_range("nie ma " + what + " o id " + std::to_string(id));
-        }
-    }
 };
 
 }  // namespace storage
