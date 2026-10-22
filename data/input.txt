@@ -1,6 +1,7 @@
 # Plik wejsciowy - format: patrz README.md, "Plik wejsciowy".
 #
 # DRIVER;imie i nazwisko;ladownosc_kg;dostepny (1/0)
+# Dostepni: 500 + 350 + 200 + 650 = 1700 kg na dzien.
 DRIVER;Jan Kowalski;500;1
 DRIVER;Anna Nowak;350;1
 DRIVER;Piotr Wisniewski;800;0
@@ -8,4 +9,45 @@ DRIVER;Maria Wojcik;200;1
 DRIVER;Tomasz Kaminski;1200;0
 DRIVER;Katarzyna Lewandowska;650;1
 
-# TODO: DELIVERY;... (razem z klasa Delivery)
+# DELIVERY;adres;waga_kg;NORMAL|URGENT;dzien_przyjecia;termin
+# id paczki = numer linii DELIVERY (1, 2, 3, ...).
+
+# Dzien 1: 1975.5 kg - wiecej niz 1700, czesc paczek dostanie POSTPONED
+DELIVERY;ul. Dluga 5, Krakow;320;NORMAL;1;4
+DELIVERY;ul. Florianska 12, Krakow;150;URGENT;1;1
+DELIVERY;ul. Karmelicka 8, Krakow;410;NORMAL;1;5
+DELIVERY;ul. Wielicka 44, Krakow;95.5;URGENT;1;2
+DELIVERY;al. Pokoju 3, Krakow;280;NORMAL;1;3
+DELIVERY;ul. Zablocie 20, Krakow;180;NORMAL;1;6
+DELIVERY;ul. Kalwaryjska 61, Krakow;240;URGENT;1;2
+DELIVERY;os. Centrum A 7, Krakow;300;NORMAL;1;4
+
+# Dzien 2: 996 kg
+DELIVERY;ul. Mogilska 15, Krakow;120;NORMAL;2;5
+DELIVERY;ul. Opolska 100, Krakow;210;URGENT;2;3
+DELIVERY;ul. Pradnicka 30, Krakow;75;NORMAL;2;6
+DELIVERY;ul. Lea 112, Krakow;340;NORMAL;2;4
+DELIVERY;ul. Krowoderska 9, Krakow;60.5;URGENT;2;2
+DELIVERY;ul. Bronowicka 52, Krakow;190;NORMAL;2;7
+
+# Dzien 3: 1900 kg - znowu wiecej niz 1700
+DELIVERY;ul. Grodzka 40, Krakow;450;NORMAL;3;6
+DELIVERY;ul. Starowislna 70, Krakow;130;URGENT;3;3
+DELIVERY;ul. Dietla 25, Krakow;260;NORMAL;3;5
+DELIVERY;ul. Kamienna 4, Krakow;380;NORMAL;3;4
+DELIVERY;ul. Rakowicka 14, Krakow;220;URGENT;3;4
+DELIVERY;ul. Lipowa 6, Krakow;170;NORMAL;3;8
+DELIVERY;ul. Zakopianska 105, Krakow;290;NORMAL;3;5
+
+# Dzien 4: 925 kg
+DELIVERY;ul. Kobierzynska 33, Krakow;140;NORMAL;4;7
+DELIVERY;ul. Ruczaj 18, Krakow;85;URGENT;4;4
+DELIVERY;ul. Czarnowiejska 50, Krakow;230;NORMAL;4;6
+DELIVERY;ul. Nawojki 11, Krakow;160;NORMAL;4;8
+DELIVERY;ul. Balicka 77, Krakow;310;URGENT;4;5
+
+# Dzien 5: 480 kg
+DELIVERY;ul. Mazowiecka 21, Krakow;100;NORMAL;5;8
+DELIVERY;ul. Slowackiego 64, Krakow;55;URGENT;5;5
+DELIVERY;ul. Kosciuszki 37, Krakow;200;NORMAL;5;9
+DELIVERY;ul. Bernardynska 2, Krakow;125;NORMAL;5;7
