@@ -50,6 +50,38 @@ Doreczone: 30 / 30
 Zapisano wynik do: .../output/result.txt
 ```
 
+## Zadanie 5 — uruchomienie eksperymentów i statystyk
+
+Skrypt [experiments/run_experiments.ps1](./experiments/run_experiments.ps1) uruchamia trzy scenariusze: małe obciążenie, przeciążenie systemu i skokowy napływ zgłoszeń.
+
+1. Zbuduj aktualną wersję programu w VS Code przez **CMake: Build** (`F7`).
+2. Otwórz terminal PowerShell w katalogu głównym projektu.
+3. Uruchom skrypt, przekazując ścieżkę do zbudowanego programu:
+
+```powershell
+.\experiments\run_experiments.ps1 -Executable .\build\Debug\kolejka.exe
+```
+
+Jeśli plik wykonywalny znajduje się w innym katalogu (np. `build/Release` lub `build`), odpowiednio zmień argument `-Executable`. Wymagany jest PowerShell oraz program z aktualnym modułem statystyk; skrypt nie kompiluje aplikacji.
+
+Skrypt tworzy katalog `output/` i zapisuje:
+
+- `output/experiments.csv` — zbiorczą tabelę wyników trzech scenariuszy;
+- `output/result-low_load.txt`, `output/result-overload.txt`, `output/result-arrival_spike.txt` — szczegółowe raporty symulacji;
+- `output/metrics.csv` — metryki ostatnio wykonanego scenariusza (nadpisywane przy każdym uruchomieniu programu).
+
+Zbiorcza tabela zawiera kolumny:
+
+```text
+scenario,strategy,total_deliveries,delivered,on_time,late,remaining,average_waiting_days,max_waiting_days,executor_utilization_percent
+```
+
+Czas oczekiwania to `deliveredDay - arrivalDay`, liczony dla dostarczonych paczek (doręczenie w dniu przyjęcia oznacza 0 dni). `on_time` oznacza doręczenia najpóźniej w terminie, `late` — doręczenia po terminie, a `remaining` — zgłoszenia niedostarczone. Wykorzystanie wykonawców to procent wykorzystanej masy względem łącznej ładowności dostępnych kierowców przez wszystkie dni symulacji.
+
+**Zakres porównania:** skrypt uruchamia trzy scenariusze dla strategii ustawionej stałą `STRATEGY` w [src/main.cpp](./src/main.cpp), domyślnie `SCORE`. Nie przełącza automatycznie strategii A/B/C. Aby je porównać, zmień strategię na `FIFO`, `PRIORITY` lub `SCORE`, przebuduj program i ponów eksperymenty. Przed kolejnym uruchomieniem zachowaj kopię wyników, ponieważ pliki o tych samych nazwach zostaną nadpisane.
+
+Wyniki CSV można wykorzystać do tabel i wykresów w sprawozdaniu. Opis metryk i scenariuszy znajduje się w [SPRAWOZDANIE_ZADANIE_5.md](./SPRAWOZDANIE_ZADANIE_5.md).
+
 ## Plik wejściowy
 
 Zwykły plik tekstowy, jeden rekord w linii, pola oddzielone średnikiem `;`. Pierwsze pole to typ rekordu. Puste linie i linie zaczynające się od `#` są pomijane.

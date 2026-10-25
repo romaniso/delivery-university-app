@@ -1,0 +1,9 @@
+# Male obciazenie: duza rezerwa ladownosci
+DRIVER;Jan Kowalski;100;1
+DRIVER;Piotr Nowak;100;1
+DELIVERY;ul. A 1;10;NORMAL;1;3
+DELIVERY;ul. A 2;12;URGENT;1;2
+DELIVERY;ul. A 3;8;NORMAL;2;5
+DELIVERY;ul. A 4;15;NORMAL;2;4
+DELIVERY;ul. A 5;9;URGENT;3;4
+DELIVERY;ul. A 6;11;NORMAL;3;6
