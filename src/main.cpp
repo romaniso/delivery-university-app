@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -14,6 +15,7 @@
 #include "io/OutputFile.h"
 #include "simulation/Simulation.h"
 #include "storage/Warehouse.h"
+#include "statistics/Statistics.h"
 
 // Strategia przydzialu. TODO: wybor strategii przez uzytkownika (CLI)
 const enums::Strategy STRATEGY = enums::Strategy::SCORE;
@@ -56,16 +58,19 @@ int main(int argc, char* argv[]) {
 
         std::cout << "Strategia: " << enums::toString(simulation.strategy()) << '\n';
         simulation.run();
-
-        // TODO: metryki (sredni czas oczekiwania, spoznienia, wykorzystanie ladownosci)
-        int delivered = 0;
-        for (const model::Delivery& delivery : warehouse.deliveries()) {
-            if (delivery.status == enums::DeliveryStatus::DELIVERED) {
-                ++delivered;
-            }
+        const statistics::Report report = statistics::collect(
+            warehouse, simulation.driverDays(), simulation.days());
+        const std::string metricsPath = root + "/output/metrics.csv";
+        std::ofstream metricsFile(metricsPath);
+        if (!metricsFile) {
+            throw std::runtime_error("Nie mozna zapisac pliku z metrykami: " + metricsPath);
         }
+        statistics::writeCsvHeader(metricsFile);
+        statistics::writeCsvRow(metricsFile, simulation.strategy(), report);
+        std::cout << "Metryki zapisano do: " << metricsPath << '\n';
+
         std::cout << "Dni symulacji: " << simulation.days() << '\n';
-        std::cout << "Doreczone: " << delivered << " / " << warehouse.deliveries().size() << '\n';
+        std::cout << "Doreczone: " << report.delivered << " / " << report.totalDeliveries << '\n';
 
         std::vector<model::Driver> drivers = warehouse.drivers();
         std::sort(drivers.begin(), drivers.end(), assignment::DriverCapacityGreater());
