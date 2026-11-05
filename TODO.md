@@ -62,7 +62,7 @@ Odhaczamy `[x]` w tym samym PR, który zamyka zadanie.
   - [x] A — FIFO (kolejność przyjęcia, `FifoOrder`),
   - [x] B — sam priorytet (`PriorityOrder`),
   - [x] C — pełny score (`ScoreOrder`).
-- [ ] Wybór strategii przez użytkownika (teraz stała `STRATEGY` w `main.cpp`).
+- [x] Wybór strategii przez użytkownika: menu po uruchomieniu albo `-s A|B|C` / `--strategy` (domyślnie C).
 - [ ] Metryki: średni czas oczekiwania, przekroczone terminy, wykorzystanie ładowności, paczki pozostałe w magazynie.
 - [ ] Zapis metryk do `output/` (CSV do wykresów).
 - [ ] Generator losowych plików wejściowych (stałe ziarno, żeby wyniki dało się powtórzyć).

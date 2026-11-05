@@ -1,10 +1,11 @@
 // Punkt wejscia programu - spina moduly razem (patrz README.md).
-// Uzycie: kolejka [plik_wejsciowy] [plik_wyjsciowy]
+// Uzycie: kolejka [-s A|B|C] [plik_wejsciowy] [plik_wyjsciowy]
 
 #include <algorithm>
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -13,27 +14,57 @@
 #include "enums/Strategy.h"
 #include "io/InputFile.h"
 #include "io/OutputFile.h"
+#include "io/Prompt.h"
 #include "simulation/Simulation.h"
 #include "storage/Warehouse.h"
 #include "statistics/Statistics.h"
 
-// Strategia przydzialu. TODO: wybor strategii przez uzytkownika (CLI)
-const enums::Strategy STRATEGY = enums::Strategy::SCORE;
+// Wartosci domyslne pytan po uruchomieniu (Enter albo brak danych na wejsciu)
+const enums::Strategy DEFAULT_STRATEGY = enums::Strategy::SCORE;
+const std::string DEFAULT_INPUT_NAME = "input.txt";    // w data/
+const std::string DEFAULT_OUTPUT_NAME = "result.txt";  // w output/
+
+const char* const USAGE =
+    "Uzycie: kolejka [-s A|B|C] [plik_wejsciowy] [plik_wyjsciowy]\n"
+    "  -s, --strategy  A (FIFO), B (PRIORITY) lub C (SCORE)\n"
+    "O wszystko, czego nie podano w argumentach, program pyta po uruchomieniu.\n";
 
 int main(int argc, char* argv[]) {
-    if (argc > 3) {
-        std::cerr << "Uzycie: kolejka [plik_wejsciowy] [plik_wyjsciowy]\n";
+    std::optional<enums::Strategy> cliStrategy;
+    std::vector<std::string> paths;
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "-s" || arg == "--strategy") {
+            if (i + 1 >= argc) {
+                std::cerr << "Brak nazwy strategii po " << arg << '\n' << USAGE;
+                return 1;
+            }
+            const std::optional<enums::Strategy> parsed = enums::fromString(argv[++i]);
+            if (!parsed) {
+                std::cerr << "Nieznana strategia: " << argv[i] << '\n' << USAGE;
+                return 1;
+            }
+            cliStrategy = parsed;
+        } else {
+            paths.push_back(arg);
+        }
+    }
+    if (paths.size() > 2) {
+        std::cerr << USAGE;
         return 1;
     }
 
     // PROJECT_ROOT_DIR ustawia CMake - sciezka do katalogu projektu,
-    // dzieki niej domyslne pliki dzialaja niezaleznie od katalogu uruchomienia.
+    // dzieki niej data/ i output/ dzialaja niezaleznie od katalogu uruchomienia.
     const std::string root = PROJECT_ROOT_DIR;
-    // @TODO: should be as user input to point out to the source file from data folder, so a user can dynamically choose one
-    const std::string inputPath = argc > 1 ? std::string(argv[1]) : root + "/data/input.txt";
-    const std::string outputPath = argc > 2 ? std::string(argv[2]) : root + "/output/result.txt";
 
     std::cout << "Kolejka Paczek\n";
+    const std::string inputPath =
+        paths.size() > 0 ? paths[0] : io::askInputPath(root + "/data", DEFAULT_INPUT_NAME);
+    const enums::Strategy strategy =
+        cliStrategy ? *cliStrategy : io::askStrategy(DEFAULT_STRATEGY);
+    const std::string outputPath =
+        paths.size() > 1 ? paths[1] : io::askOutputPath(root + "/output", DEFAULT_OUTPUT_NAME);
 
     try {
         storage::Warehouse warehouse;
@@ -42,7 +73,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Kierowcy: " << warehouse.drivers().size() << '\n';
         std::cout << "Paczki: " << warehouse.deliveries().size() << '\n';
 
-        simulation::Simulation simulation(warehouse, STRATEGY);
+        simulation::Simulation simulation(warehouse, strategy);
 
         const double maxCapacityKg = simulation.maxAvailableCapacity();
         for (const model::Delivery& delivery : warehouse.deliveries()) {

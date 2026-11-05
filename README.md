@@ -23,7 +23,7 @@ W VS Code: rozszerzenia **C/C++** i **CMake Tools** — VS Code zaproponuje je s
 1. `File → Open Folder…` → folder projektu.
 2. Wybierz kit (kompilator), np. na macOS **Clang … arm64-apple-darwin**.
 3. `F7` — build.
-4. `Shift+F5` — uruchomienie (wynik w `output/result.txt`).
+4. `Shift+F5` — uruchomienie; program pyta o plik wejściowy, strategię i plik wyjściowy (domyślnie wynik w `output/result.txt`).
 
 Błąd typu „does not match the generator used previously”: `Cmd/Ctrl+Shift+P` → **CMake: Delete Cache and Reconfigure**, potem znowu `F7`.
 
@@ -32,10 +32,30 @@ Błąd typu „does not match the generator used previously”: `Cmd/Ctrl+Shift+
 ```bash
 cmake -S . -B build
 cmake --build build
-./build/kolejka [plik_wejsciowy] [plik_wyjsciowy]     # Windows + MSVC: build\Debug\kolejka.exe
+./build/kolejka [-s A|B|C] [plik_wejsciowy] [plik_wyjsciowy]     # Windows + MSVC: build\Debug\kolejka.exe
 ```
 
-Oba argumenty są opcjonalne. Domyślnie program czyta `data/input.txt` i zapisuje `output/result.txt` (ścieżki względem katalogu projektu).
+Wszystkie argumenty są opcjonalne. O wszystko, czego nie podano w argumentach, program pyta po uruchomieniu — kolejno o plik wejściowy, strategię i plik wyjściowy:
+
+```
+Wybierz plik wejsciowy (.../data):
+  1) edge-all-urgent.txt
+  ...
+  8) input.txt
+Wybor [numer, nazwa lub sciezka, Enter = input.txt]:
+Wybierz strategie:
+  1) A - FIFO
+  2) B - priorytet
+  3) C - pelny score
+Wybor [1-3, Enter = C - pelny score]:
+Plik wyjsciowy [nazwa w .../output lub sciezka, Enter = result.txt]:
+```
+
+- **Plik wejściowy** — lista plików `.txt` z `data/`, czytana przy każdym uruchomieniu (nowy plik w `data/` pojawi się sam). Można wpisać numer z listy, nazwę pliku z `data/` albo dowolną ścieżkę; `.txt` można pominąć (`edge-full` = `edge-full.txt`). Nieistniejący plik — program pyta ponownie.
+- **Strategia** — numer, litera (`A`/`B`/`C`) lub nazwa (`FIFO`/`PRIORITY`/`SCORE`).
+- **Plik wyjściowy** — sama nazwa trafia do `output/`, ścieżka z katalogiem jest używana bez zmian. Nazwa bez rozszerzenia dostaje `.txt` (`wynik` → `output/wynik.txt`).
+
+Enter wybiera wartość domyślną (`data/input.txt`, C, `output/result.txt`); tak samo, gdy program działa bez terminala (brak danych na wejściu). Żeby pominąć pytania (np. w skryptach), podaj wszystko w argumentach: `./build/kolejka -s A data/edge-heavy.txt output/heavy.txt`.
 
 Oczekiwany wynik w konsoli:
 
@@ -62,6 +82,12 @@ Skrypt [experiments/run_experiments.ps1](./experiments/run_experiments.ps1) uruc
 .\experiments\run_experiments.ps1 -Executable .\build\Debug\kolejka.exe
 ```
 
+Na macOS/Linux (bez instalowania PowerShella) użyj odpowiednika w bashu — działa tak samo i zapisuje te same pliki:
+
+```bash
+./experiments/run_experiments.sh ./build/kolejka
+```
+
 Jeśli plik wykonywalny znajduje się w innym katalogu (np. `build/Release` lub `build`), odpowiednio zmień argument `-Executable`. Wymagany jest PowerShell oraz program z aktualnym modułem statystyk; skrypt nie kompiluje aplikacji.
 
 Skrypt tworzy katalog `output/` i zapisuje:
@@ -78,7 +104,17 @@ scenario,strategy,total_deliveries,delivered,on_time,late,remaining,average_wait
 
 Czas oczekiwania to `deliveredDay - arrivalDay`, liczony dla dostarczonych paczek (doręczenie w dniu przyjęcia oznacza 0 dni). `on_time` oznacza doręczenia najpóźniej w terminie, `late` — doręczenia po terminie, a `remaining` — zgłoszenia niedostarczone. Wykorzystanie wykonawców to procent wykorzystanej masy względem łącznej ładowności dostępnych kierowców przez wszystkie dni symulacji.
 
-**Zakres porównania:** skrypt uruchamia trzy scenariusze dla strategii ustawionej stałą `STRATEGY` w [src/main.cpp](./src/main.cpp), domyślnie `SCORE`. Nie przełącza automatycznie strategii A/B/C. Aby je porównać, zmień strategię na `FIFO`, `PRIORITY` lub `SCORE`, przebuduj program i ponów eksperymenty. Przed kolejnym uruchomieniem zachowaj kopię wyników, ponieważ pliki o tych samych nazwach zostaną nadpisane.
+**Zakres porównania:** skrypt uruchamia trzy scenariusze dla jednej strategii — domyślnie `SCORE` (C). Inną strategię podaj jako argument, bez przebudowywania programu:
+
+```powershell
+.\experiments\run_experiments.ps1 -Executable .\build\Debug\kolejka.exe -Strategy A
+```
+
+```bash
+./experiments/run_experiments.sh ./build/kolejka A
+```
+
+Przed kolejnym uruchomieniem zachowaj kopię wyników (np. zmień nazwę `experiments.csv` na `experiments-A.csv`), ponieważ pliki o tych samych nazwach zostaną nadpisane.
 
 Wyniki CSV można wykorzystać do tabel i wykresów w sprawozdaniu. Opis metryk i scenariuszy znajduje się w [SPRAWOZDANIE_ZADANIE_5.md](./SPRAWOZDANIE_ZADANIE_5.md).
 
@@ -105,7 +141,7 @@ Blad: data/input.txt, linia 17: "urgent" nie jest priorytetem (NORMAL/URGENT)
 
 ## Plik wyjściowy
 
-Pliki w `output/` (ignorowane przez git). `output/result.txt` (dla strategii ustawionej w `main.cpp`, domyślnie C) zawiera:
+Pliki w `output/` (ignorowane przez git). `output/result.txt` (dla wybranej strategii) zawiera:
 
 - nagłówek ze strategią i podsumowaniem symulacji (liczba dni, doręczone paczki),
 - kierowców posortowanych wg ładowności,
@@ -273,7 +309,7 @@ dla dziś = 1, 2, ...:
             albo minęło ostatniDzieńPrzyjęcia + 30 dni (ochrona przed paczkami, które nigdy się nie zmieszczą)
 ```
 
-Pętlę prowadzi `simulation::Simulation` (`simulation/Simulation.h`): jedna symulacja = jedna strategia (`enums::Strategy`), wybierana w `main.cpp` stałą `STRATEGY`. `Simulation::assign` wybiera funktor dla strategii (`FifoOrder`, `PriorityOrder`, `ScoreOrder`) i przekazuje go do `DeliveryManager::assign`.
+Pętlę prowadzi `simulation::Simulation` (`simulation/Simulation.h`): jedna symulacja = jedna strategia (`enums::Strategy`), wybierana w menu po uruchomieniu albo argumentem `-s` / `--strategy` (domyślnie `DEFAULT_STRATEGY` w `main.cpp`, czyli C). `Simulation::assign` wybiera funktor dla strategii (`FifoOrder`, `PriorityOrder`, `ScoreOrder`) i przekazuje go do `DeliveryManager::assign`.
 
 Żeby porównać strategie, uruchamiamy trzy symulacje, każdą na własnej kopii `Warehouse`:
 

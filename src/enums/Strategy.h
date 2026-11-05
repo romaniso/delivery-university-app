@@ -3,6 +3,9 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cctype>
+#include <optional>
 #include <string>
 
 namespace enums {
@@ -20,6 +23,17 @@ inline std::string toString(Strategy strategy) {
         case Strategy::SCORE: return "C - pelny score";
     }
     return "?";  // nie powinno sie zdarzyc - kazda wartosc jest obsluzona wyzej
+}
+
+// Strategia z argumentu wiersza polecen: litera (A/B/C) albo nazwa (FIFO/PRIORITY/SCORE),
+// bez rozrozniania wielkosci liter. Nieznana nazwa -> std::nullopt.
+inline std::optional<Strategy> fromString(std::string name) {
+    std::transform(name.begin(), name.end(), name.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    if (name == "A" || name == "FIFO") return Strategy::FIFO;
+    if (name == "B" || name == "PRIORITY") return Strategy::PRIORITY;
+    if (name == "C" || name == "SCORE") return Strategy::SCORE;
+    return std::nullopt;
 }
 
 }
