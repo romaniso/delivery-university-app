@@ -1,6 +1,9 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$Executable
+    [string]$Executable,
+
+    # A/B/C (lub FIFO/PRIORITY/SCORE); puste = domyslna strategia programu
+    [string]$Strategy = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,6 +15,10 @@ $experimentsPath = Join-Path $outputDirectory "experiments.csv"
 
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
 $results = @()
+$strategyArgs = @()
+if ($Strategy) {
+    $strategyArgs = @("--strategy", $Strategy)
+}
 
 $scenarios = @(
     @{ Name = "low_load"; File = "experiment-low.txt" },
@@ -23,7 +30,7 @@ foreach ($scenario in $scenarios) {
     $inputPath = Join-Path $root (Join-Path "data" $scenario.File)
     $resultPath = Join-Path $outputDirectory ("result-" + $scenario.Name + ".txt")
 
-    & $executablePath $inputPath $resultPath
+    & $executablePath @strategyArgs $inputPath $resultPath
     if ($LASTEXITCODE -ne 0) {
         throw "Eksperyment '$($scenario.Name)' zakonczyl sie kodem $LASTEXITCODE."
     }
